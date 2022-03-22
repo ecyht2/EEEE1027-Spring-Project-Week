@@ -4,6 +4,20 @@ from math import pi
 
 class Car():
     """
+    Creates a Car object
+
+    Parameters
+    ----------
+    left
+        A tuple of the pins of the left wheel in the form of (enable, pin1, pin2)
+    right
+        A tuple of the pins of the right wheel in the form of (enable, pin1, pin2)
+    encoder_left
+        A tuple of of the pins of the left encoder in the form of (digital pin, diameter of the wheel, number of holes in the encoder wheel)
+        Default is set to all -1 (off)
+    encoder_left
+        A tuple of of the pins of the right encoder in the form of (digital pin, diameter of the wheel, number of holes in the encoder wheel)
+        Default is set to all -1 (off)
     """
     def __init__(self, left, right, encoder_left = (-1, -1, -1), encoder_right = (-1, -1, -1)):
         # Setting up the Left Wheel
@@ -23,21 +37,38 @@ class Car():
             self.encoder_right = Encoder(encoder_right[0], encoder_right[1], encoder_right[2])
 
     def setup(self, pwm = False):
+        """
+        Sets up the GPIO modes of the pins
+
+        Parameters
+        ----------
+        pwm
+            Decides if pwm is needed or not, by default False
+        """
+        # Left Motor
         for i in self.left_motor.values():
             if i == -1:
                 continue
             GPIO.setup(i, GPIO.OUT)
+        # Right Motor
         for i in self.right_motor.values():
             if i == -1:
                 continue
             GPIO.setup(i, GPIO.OUT)
 
+        # PWM
         if pwm:
             self.setup_pwm("right")
             self.setup_pwm("left")
 
+        # Left Encoder if installed
         try:
             self.encoder_left.setup()
+        except (NameError, AttributeError):
+            pass
+
+        # Right Encoder if installed
+        try:
             self.encoder_right.setup()
         except (NameError, AttributeError):
             pass
@@ -46,8 +77,13 @@ class Car():
         """
         Setting up the pwm object of a given wheel if changing the speed of the wheels is needed with frequency freq (default 1000Hz)
 
-        side can be either "left" or "right"
-        Raises ValueError if neither was given
+        Parameters
+        ----------
+        side
+            Can be either "left" or "right"
+            Raises ValueError if neither was given
+        freq
+            Setting what frequency of the pwm signal, default is 1000 Hz
         """
         if side == "left":
             self.left_motor["pwm"] = GPIO.PWM(self.left_motor["enable"], freq)
@@ -60,7 +96,14 @@ class Car():
         """
         Move the Car according to the speeds
 
-        Raises a ValueError if either speed is greater than 100 or less than -100
+        Prameters
+        ---------
+        speed_left
+            The speed of the left wheel
+            Raises a ValueError if it is greater than 100 or less than -100
+        speed_right
+            The speed of the right wheel
+            Raises a ValueError if it is greater than 100 or less than -100
         """
         self.set_speed(speed_left, "left")
         self.set_speed(speed_right, "right")
@@ -69,10 +112,14 @@ class Car():
         """
         Set the speed of a specific wheel according to side
 
-        Raises a ValueError if speed is greater than 100 or less than -100
-
-        side can be either "left" or "right"
-        Raises ValueError if neither was given
+        Parameters
+        ----------
+        speed
+            The speed to set the wheel into
+            Raises a ValueError if speed is greater than 100 or less than -100
+        side
+            Can be either "left" or "right"
+            Raises ValueError if neither was given
         """
         # Raising Error if invalid side
         if side != "left" and side != "right":
@@ -115,9 +162,13 @@ class Car():
 
     def forward(self, speed = 100):
         """
-        Moves the car forwards according to speed (default is 100)
+        Moves the car forwards according to speed
 
-        Raises a ValueError if speed is greater than 100 or less than -100
+        Prameters
+        ---------
+        speed
+            The speed to move forward in, default is 100
+            Raises a ValueError if speed is greater than 100 or less than 0
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
@@ -126,33 +177,65 @@ class Car():
 
     def backward(self, speed = 100):
         """
-        Moves the car backwards according to speed (default is 100)
+        Moves the car backwards according to speed
 
-        Raises a ValueError if speed is greater than 100 or less than -100
+        Prameters
+        ---------
+        speed
+            The speed to move backwards in, default is 100
+            Raises a ValueError if speed is greater than 100 or less than 0
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
         self.move_car(-speed, -speed)
 
-    def turn_left(self, speed = 100):
+    def turn_left(self, speed = 100, mode = 0):
         """
-        Turns the car left according to speed (default is 100)
+        Turns the car left according to speed
 
-        Raises a ValueError if speed is greater than 100 or less than -100
+        Prameters
+        ---------
+        speed
+            The speed to turn the in, default is 100
+            Raises a ValueError if speed is greater than 100 or less than 0
+        mode
+            Decides how the car will turn
+            if mode is 0, one wheel will move forward and the other will move backwards (turn in the same spot)
+            if mode is 1, one wheel will move forward and the other will stop (turn while still moving forward)
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
-        self.move_car(speed, -speed)
 
-    def turn_right(self, speed = 100):
+        if mode == 0:
+            self.move_car(-speed, speed)
+        elif mode == 1:
+            self.move_car(0, speed)
+        else:
+            raise ValueError("Invalid Mode")
+
+    def turn_right(self, speed = 100, mode = 0):
         """
-        Turns the car right according to speed (default is 100)
+        Turns the car right according to speed
 
-        Raises a ValueError if speed is greater than 100 or less than -100
+        Prameters
+        ---------
+        speed
+            The speed to turn the in, default is 100
+            Raises a ValueError if speed is greater than 100 or less than 0
+        mode
+            Decides how the car will turn
+            if mode is 0, one wheel will move forward and the other will move backwards (turn in the same spot)
+            if mode is 1, one wheel will move forward and the other will stop (turn while still moving forward)
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
-        self.move_car(-speed, speed)
+
+        if mode == 0:
+            self.move_car(speed, -speed)
+        elif mode == 1:
+            self.move_car(speed, 0)
+        else:
+            raise ValueError("Invalid Mode")
 
     def stop(self):
         """
@@ -161,6 +244,18 @@ class Car():
         self.move_car(0, 0)
 
 class Encoder:
+    """
+    Creates an Encoder object
+
+    Parameters
+    ----------
+    pin
+        The pin number of the digital pin
+    d
+        The diameter of the wheel
+    holes
+        The number of holes the encoder wheel has
+    """
     def __init__(self, pin, d, holes):
         self.count = 0
         self.diameter = d
@@ -168,31 +263,89 @@ class Encoder:
         self.digitalPin = pin
 
     def setup(self):
+        """
+        Setting up the GPIO pin modes
+        """
         GPIO.setup(self.digitalPin, GPIO.IN)
         self.cStatus = GPIO.input(self.digitalPin)
 
-    def blink(self):
+    def __blink(self):
+        """
+        Executed when the encoder changes state
+        """
         self.count+=1
 
     def reset(self):
+        """
+        Resets the counter in which the encoder state changes
+        """
         self.count = 0
 
     def count_to_distance(self, cCounter):
+        """
+        Converts the amount of changes of encoder states into distance according to the unit of the diameter given
+
+        Parameters
+        ----------
+        cCounter
+            The amount of state changes
+
+        Returns
+        -------
+        int
+            The distance calculated
+        """
         ratio = 2*pi*self.diameter / (2*self.nHoles)
         return ratio * cCounter
 
     def distance_to_count(self, distance):
+        """
+        Converts distance according to the unit of the diameter given into the amount of changes of encoder states
+
+        Parameters
+        ----------
+        distance
+            Distance in the unit of the diameter given
+
+        Returns
+        -------
+        int
+            The amount of state changes calculated
+        """
         ratio = nHoles / (2*pi*self.diameter)
         return ratio * distance
 
     def update(self):
+        """
+        Updates the amount of state changes
+
+        Returns
+        -------
+        None
+        """
         status = GPIO.input(self.digitalPin)
         if self.cStatus != status:
             self.cStatus = status
-            self.blink()
+            self.__blink()
 
     def get_counter(self):
+        """
+        Get the amount of state changes has occured
+
+        Returns
+        -------
+        int
+            The amount of state changes
+        """
         return self.count
 
     def get_distance(self):
+        """
+        Get the distance traveled as recorded by the encoder
+
+        Returns
+        -------
+        int
+            The distance traveled as recorded by the encoder in the unit of the diameter given
+        """
         return self.count_to_distance(self.count)
