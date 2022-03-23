@@ -18,6 +18,7 @@ import cv2
 import picamera
 import numpy as np
 import robot
+from classes import PID
 
 # Initialize camera
 camera = picamera.PiCamera()
@@ -31,14 +32,12 @@ robot.setup()
 car = robot.car
 
 # Initialize PID values
-error = 0
-P = error
-I = 0
-D = 0
-prev_error = error
 K_P = 0.15
 K_I = 0
 K_D = 0
+baseline = 96
+basespeed = 30
+pid = PID(baseline, K_P, K_I, K_D)
 
 # Loop over all frames captured by camera indefinitely
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -81,34 +80,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 		cx = int(M['m10']/M['m00'])
 
 		# Updating PID
-		error = 96 - cx
-		P = error
-		I = I + error
-		D = error - prev_error
-		prev_error = error
-		PID = K_P*P + K_I*I + K_D*D
+		pid.update(cx)
+		PID = pid.get_PID()
 
-		car.move_car(30 - PID, 30 + PID)
-		print(PID, cx)
 #		# Moving Car
-#		if cx >= 150:
-#			cv2.putText(image, 'right', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			car.turn_right(35, 1)
-#			print("right")
-#
-#		if cx < 150 and cx > 40:
-#			car.move_car(30 - PID, 30 + PID)
-#			cv2.putText(image, 'forward', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			#car.forward(30)
-#			print("forward")
-#
-#		if cx <= 40:
-#			cv2.putText(image, 'left', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			car.turn_left(35, 1)
-#			print("left")
-#	else:
-#		car.move_car(30 - PID, 30 + PID)
-#		print("stop")
+		car.move_car(basespeed - PID, basespeed + PID)
+		print(PID, cx)
 
 
 		#cv2.putText(image, str(cx), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)

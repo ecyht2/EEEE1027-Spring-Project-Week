@@ -349,3 +349,60 @@ class Encoder:
             The distance traveled as recorded by the encoder in the unit of the diameter given
         """
         return self.count_to_distance(self.count)
+
+class PID:
+    """
+    Creates a PID object
+
+    Parameters
+    ----------
+    baseline
+        The baseline value in which to compared to
+    K_P
+        The constant value of P
+    K_I
+        The constant value of I
+    K_D
+        The constant value of D
+    """
+    def __init__(self, baseline, K_P, K_I, K_D):
+        self.baseline = baseline
+        self.K_P = K_P
+        self.K_I = K_I
+        self.K_D = K_D
+        self.error = 0
+        self.P = 0
+        self.I = 0
+        self.D = 0
+        self.prev_error = 0
+
+    def update(self, value):
+        """
+        Update P, I, D and error according to value
+
+        Parameters
+        ----------
+        value
+            The current value to be compared with
+
+        Returns
+        -------
+        None
+        """
+        self.error = self.baseline - value
+        self.P = self.error
+        self.I += self.error
+        self.D = self.error - self.prev_error
+        self.prev_error = self.error
+
+    def get_PID(self):
+        """
+        Get the PID value according to current P, I and D value
+
+        Returns
+        -------
+        int
+            The PID value
+        """
+        PID = self.K_P*self.P + self.K_I*self.I + self.K_D*self.D
+        return PID
