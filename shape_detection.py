@@ -24,7 +24,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # setting threshold of gray image
-        _, threshold = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY)
+        _, threshold = cv2.threshold(gray, 90, 255, cv2.THRESH_BINARY)
 
         # using a findContours() function
         contours, _ = cv2.findContours(
