@@ -21,9 +21,9 @@ import robot
 
 # Initialize camera
 camera = picamera.PiCamera()
-camera.resolution = (192,112)
+camera.resolution = (192, 112)
 camera.framerate = 20
-rawCapture = PiRGBArray(camera,size=(192,108))
+rawCapture = PiRGBArray(camera,size=(192, 108))
 time.sleep(0.1)
 
 # setup GPIO pins
@@ -38,7 +38,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	# Flipping the image
 	image = cv2.flip(image, 0)
 	image = cv2.flip(image, +1)
-	image = image[15:]
+	#image = image[15:]
 
 	# Create key to break for loop
 	key = cv2.waitKey(1) & 0xFF
@@ -46,7 +46,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	# convert to grayscale, gaussian blur, and threshold
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	blur = cv2.GaussianBlur(gray,(5,5),0)
-	ret,thresh = cv2.threshold(blur, 60, 80, cv2.THRESH_BINARY_INV)
+	ret,thresh = cv2.threshold(blur, 30, 70, cv2.THRESH_BINARY_INV)
 
 	# Erode to eliminate noise, Dilate to restore eroded parts of image
 	mask = cv2.erode(thresh, None, iterations=2)
@@ -54,7 +54,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
 	# Find all contours in frame
 	contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	cv2.imshow('mask', mask)
+	#cv2.imshow('mask', mask)
 
 
 	# Find x-axis centroid of largest contour and cut power to appropriate motor
@@ -72,24 +72,26 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
 		if cx >= 150:
 			cv2.putText(image, 'right', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-			car.turn_right(25, 1)
+			car.turn_right(35, 1)
 			print("right")
 
 		if cx < 150 and cx > 40:
 			cv2.putText(image, 'forward', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-			car.forward(25)
+			car.forward(30)
 			print("forward")
 
 		if cx <= 40:
 			cv2.putText(image, 'left', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-			car.turn_left(25, 1)
+			car.turn_left(35, 1)
 			print("left")
-
-		cv2.putText(image, str(cx), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 	else:
-		car.stop()
+		car.stop ()
+		print("stop")
 
-	cv2.imshow('image', image)
+
+		#cv2.putText(image, str(cx), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+	#cv2.imshow('image', image)
 	if key == ord("q"):
             break
 
