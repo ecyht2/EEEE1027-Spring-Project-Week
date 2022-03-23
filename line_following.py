@@ -30,6 +30,16 @@ time.sleep(0.1)
 robot.setup()
 car = robot.car
 
+# Initialize PID values
+error = 0
+P = error
+I = I + error
+prev_error = error
+D = error - prev_error
+K_P = 0.05
+K_I = 0
+K_D = 0
+
 # Loop over all frames captured by camera indefinitely
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
@@ -70,23 +80,33 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 		# Find x-axis centroid using image moments
 		cx = int(M['m10']/M['m00'])
 
-		if cx >= 150:
-			cv2.putText(image, 'right', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-			car.turn_right(35, 1)
-			print("right")
+		# Updating PID
+		error = 96 - cx
+		P = error
+		I = I + error
+		D = error - prev_error
+		prev_error = error
+		PID = K_P*P + K_I*I + K_D*D
 
-		if cx < 150 and cx > 40:
-			cv2.putText(image, 'forward', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-			car.forward(30)
-			print("forward")
-
-		if cx <= 40:
-			cv2.putText(image, 'left', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-			car.turn_left(35, 1)
-			print("left")
-	else:
-		car.stop ()
-		print("stop")
+		# Moving Car
+		car.moveCar(20 - PID, 20 + PID)
+#		if cx >= 150:
+#			cv2.putText(image, 'right', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+#			car.turn_right(35, 1)
+#			print("right")
+#
+#		if cx < 150 and cx > 40:
+#			cv2.putText(image, 'forward', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+#			car.forward(30)
+#			print("forward")
+#
+#		if cx <= 40:
+#			cv2.putText(image, 'left', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+#			car.turn_left(35, 1)
+#			print("left")
+#	else:
+#		car.stop ()
+#		print("stop")
 
 
 		#cv2.putText(image, str(cx), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
