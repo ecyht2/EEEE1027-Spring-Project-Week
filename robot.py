@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 from time import sleep, time
 from classes import *
 
-right_wheel = (21, 12, 20)
+right_wheel = (12, 21, 20)
 left_wheel = (18, 24, 23)
 
 car = Car(left_wheel, right_wheel, (26, 6.5, 20), (19, 6.5, 20))
@@ -19,14 +19,14 @@ def setup():
     encoderRight.setup()
 
 def loop():
-    cTime = time() + 2
     while True:
-        car.forward()
+        car.turn_right(100)
         encoderLeft.update()
         encoderRight.update()
-        if time() >= cTime:
+        if encoderLeft.get_counter() >= 20 or encoderRight.get_counter() >= 20:
             print(encoderLeft.get_counter())
             print(encoderRight.get_counter())
+            car.stop()
             break
 
 def exit():
