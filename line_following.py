@@ -33,10 +33,10 @@ car = robot.car
 # Initialize PID values
 error = 0
 P = error
-I = I + error
+I = 0
+D = 0
 prev_error = error
-D = error - prev_error
-K_P = 0.05
+K_P = 0.15
 K_I = 0
 K_D = 0
 
@@ -88,16 +88,18 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 		prev_error = error
 		PID = K_P*P + K_I*I + K_D*D
 
-		# Moving Car
-		car.moveCar(20 - PID, 20 + PID)
+		car.move_car(30 - PID, 30 + PID)
+		print(PID, cx)
+#		# Moving Car
 #		if cx >= 150:
 #			cv2.putText(image, 'right', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 #			car.turn_right(35, 1)
 #			print("right")
 #
 #		if cx < 150 and cx > 40:
+#			car.move_car(30 - PID, 30 + PID)
 #			cv2.putText(image, 'forward', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			car.forward(30)
+#			#car.forward(30)
 #			print("forward")
 #
 #		if cx <= 40:
@@ -105,7 +107,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 #			car.turn_left(35, 1)
 #			print("left")
 #	else:
-#		car.stop ()
+#		car.move_car(30 - PID, 30 + PID)
 #		print("stop")
 
 
