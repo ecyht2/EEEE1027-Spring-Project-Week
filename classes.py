@@ -110,13 +110,13 @@ class Car():
 
     def set_speed(self, speed, side):
         """
-        Set the speed of a specific wheel according to side
+        Set the speed of a specific wheel according to side. The wheel will go the other way when it is a negative value
 
         Parameters
         ----------
         speed
             The speed to set the wheel into
-            Raises a ValueError if speed is greater than 100 or less than -100
+            The wheel will not turn faster when speed is < -100 or > 100
         side
             Can be either "left" or "right"
             Raises ValueError if neither was given
@@ -141,7 +141,8 @@ class Car():
         # Changes speed if pwm is set up
         if wheel["pwm"] != -1:
             if absSpeed > 100 or absSpeed < 0:
-                raise ValueError("Invalid Speed")
+                absSpeed = 100
+                wheel.get("pwm").start(absSpeed)
             if absSpeed == 0:
                 wheel.get("pwm").stop()
             else:
