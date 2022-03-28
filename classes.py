@@ -110,13 +110,13 @@ class Car():
 
     def set_speed(self, speed, side):
         """
-        Set the speed of a specific wheel according to side
+        Set the speed of a specific wheel according to side. The wheel will go the other way when it is a negative value
 
         Parameters
         ----------
         speed
             The speed to set the wheel into
-            Raises a ValueError if speed is greater than 100 or less than -100
+            The wheel will not turn faster when speed is < -100 or > 100
         side
             Can be either "left" or "right"
             Raises ValueError if neither was given
@@ -141,7 +141,8 @@ class Car():
         # Changes speed if pwm is set up
         if wheel["pwm"] != -1:
             if absSpeed > 100 or absSpeed < 0:
-                raise ValueError("Invalid Speed")
+                absSpeed = 100
+                wheel.get("pwm").start(absSpeed)
             if absSpeed == 0:
                 wheel.get("pwm").stop()
             else:
@@ -401,3 +402,60 @@ class Wheel:
             GPIO.output(pin1, False)
             GPIO.output(pin2, True)
         pass
+
+class PID:
+    """
+    Creates a PID object
+
+    Parameters
+    ----------
+    baseline
+        The baseline value in which to compared to
+    K_P
+        The constant value of P
+    K_I
+        The constant value of I
+    K_D
+        The constant value of D
+    """
+    def __init__(self, baseline, K_P, K_I, K_D):
+        self.baseline = baseline
+        self.K_P = K_P
+        self.K_I = K_I
+        self.K_D = K_D
+        self.error = 0
+        self.P = 0
+        self.I = 0
+        self.D = 0
+        self.prev_error = 0
+
+    def update(self, value):
+        """
+        Update P, I, D and error according to value
+
+        Parameters
+        ----------
+        value
+            The current value to be compared with
+
+        Returns
+        -------
+        None
+        """
+        self.error = self.baseline - value
+        self.P = self.error
+        self.I += self.error
+        self.D = self.error - self.prev_error
+        self.prev_error = self.error
+
+    def get_PID(self):
+        """
+        Get the PID value according to current P, I and D value
+
+        Returns
+        -------
+        int
+            The PID value
+        """
+        PID = self.K_P*self.P + self.K_I*self.I + self.K_D*self.D
+        return PID

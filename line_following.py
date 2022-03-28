@@ -18,6 +18,7 @@ import cv2
 import picamera
 import numpy as np
 import robot
+from classes import PID
 
 # Initialize camera
 camera = picamera.PiCamera()
@@ -27,94 +28,79 @@ rawCapture = PiRGBArray(camera,size=(192, 108))
 time.sleep(0.1)
 
 # setup GPIO pins
-robot.setup()
 car = robot.car
 
 # Initialize PID values
-error = 0
-P = error
-I = I + error
-prev_error = error
-D = error - prev_error
-K_P = 0.05
+K_P = 0.25
 K_I = 0
-K_D = 0
+K_D = 0.25
+baseline = 96
+basespeed = 30
+pid = PID(baseline, K_P, K_I, K_D)
 
-# Loop over all frames captured by camera indefinitely
-for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+def loop():
+	# Loop over all frames captured by camera indefinitely
+	for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
-	# Display camera input
-	image = frame.array
-	# Flipping the image
-	image = cv2.flip(image, 0)
-	image = cv2.flip(image, +1)
-	#image = image[15:]
+		# Display camera input
+		image = frame.array
+		# Flipping the image
+		image = cv2.flip(image, 0)
+		image = cv2.flip(image, +1)
+		#image = image[15:]
 
-	# Create key to break for loop
-	key = cv2.waitKey(1) & 0xFF
+		# Create key to break for loop
+		key = cv2.waitKey(1) & 0xFF
 
-	# convert to grayscale, gaussian blur, and threshold
-	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-	blur = cv2.GaussianBlur(gray,(5,5),0)
-	ret,thresh = cv2.threshold(blur, 30, 70, cv2.THRESH_BINARY_INV)
+		threshold = [0, 0]
+		with open("/home/pi/project/threshold.txt", "r") as f:
+			threshold[0] = int(f.readline())
+			threshold[1] = int(f.readline())
 
-	# Erode to eliminate noise, Dilate to restore eroded parts of image
-	mask = cv2.erode(thresh, None, iterations=2)
-	mask = cv2.dilate(mask, None, iterations=2)
+		# convert to grayscale, gaussian blur, and threshold
+		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+		blur = cv2.GaussianBlur(gray,(5,5),0)
+		ret,thresh = cv2.threshold(blur, threshold[0], threshold[1], cv2.THRESH_BINARY_INV)
 
-	# Find all contours in frame
-	contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	#cv2.imshow('mask', mask)
+		# Erode to eliminate noise, Dilate to restore eroded parts of image
+		mask = cv2.erode(thresh, None, iterations=2)
+		mask = cv2.dilate(mask, None, iterations=2)
 
-
-	# Find x-axis centroid of largest contour and cut power to appropriate motor
-	# to recenter camera on centroid.
-	# This control algorithm was written referencing guide:
-	# Author: Einsteinium Studios
-	# Availability: http://einsteiniumstudios.com/beaglebone-opencv-line-following-robot.html
-	if len(contours) > 0:
-		# Find largest contour area and image moments
-		c = max(contours, key = cv2.contourArea)
-		M = cv2.moments(c)
-
-		# Find x-axis centroid using image moments
-		cx = int(M['m10']/M['m00'])
-
-		# Updating PID
-		error = 96 - cx
-		P = error
-		I = I + error
-		D = error - prev_error
-		prev_error = error
-		PID = K_P*P + K_I*I + K_D*D
-
-		# Moving Car
-		car.moveCar(20 - PID, 20 + PID)
-#		if cx >= 150:
-#			cv2.putText(image, 'right', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			car.turn_right(35, 1)
-#			print("right")
-#
-#		if cx < 150 and cx > 40:
-#			cv2.putText(image, 'forward', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			car.forward(30)
-#			print("forward")
-#
-#		if cx <= 40:
-#			cv2.putText(image, 'left', (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-#			car.turn_left(35, 1)
-#			print("left")
-#	else:
-#		car.stop ()
-#		print("stop")
+		# Find all contours in frame
+		contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 
-		#cv2.putText(image, str(cx), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+		# Find x-axis centroid of largest contour and cut power to appropriate motor
+		# to recenter camera on centroid.
+		# This control algorithm was written referencing guide:
+		# Author: Einsteinium Studios
+		# Availability: http://einsteiniumstudios.com/beaglebone-opencv-line-following-robot.html
+		if len(contours) > 0:
+			# Find largest contour area and image moments
+			c = max(contours, key = cv2.contourArea)
+			M = cv2.moments(c)
 
-	#cv2.imshow('image', image)
-	if key == ord("q"):
-            break
+			# Find x-axis centroid using image moments
+			cx = int(M['m10']/M['m00'])
 
-	rawCapture.truncate(0)
+			# Updating PID
+			pid.update(cx)
+			PID = pid.get_PID()
 
-robot.exit()
+			# Moving Car
+			car.move_car(basespeed - PID, basespeed + PID)
+			print(PID, cx)
+
+		#cv2.imshow('mask', mask)
+		#cv2.imshow('image', image)
+		if key == ord("q"):
+			break
+
+		rawCapture.truncate(0)
+
+if __name__ == '__main__':
+	try:
+		robot.setup()
+		loop()
+	finally:
+		robot.exit()
