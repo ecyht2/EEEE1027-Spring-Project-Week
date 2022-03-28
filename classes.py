@@ -21,12 +21,10 @@ class Car():
     """
     def __init__(self, left, right, encoder_left = (-1, -1, -1), encoder_right = (-1, -1, -1)):
         # Setting up the Left Wheel
-        self.left_motor = {"enable": left[0], "pin1": left[1], "pin2": left[2]}
-        self.left_motor["pwm"] = -1
+        self.left_motor = Wheel(left[0], left[1], left[2])
 
         # Setting up the Right Wheel
-        self.right_motor = {"enable": right[0], "pin1": right[1], "pin2": right[2]}
-        self.right_motor["pwm"] = -1
+        self.right_motor = Wheel(right[0], right[1], right[2])
 
         # Setting up Left Encoder
         if encoder_left[2] != -1:
@@ -36,7 +34,7 @@ class Car():
         if encoder_right[2] != -1:
             self.encoder_right = Encoder(encoder_right[0], encoder_right[1], encoder_right[2])
 
-    def setup(self, pwm = False):
+    def setup(self, pwm = False, freq = 1000):
         """
         Sets up the GPIO modes of the pins
 
@@ -44,22 +42,12 @@ class Car():
         ----------
         pwm
             Decides if pwm is needed or not, by default False
+        freq
+            Setting what frequency of the pwm signal, default is 1000 Hz
         """
-        # Left Motor
-        for i in self.left_motor.values():
-            if i == -1:
-                continue
-            GPIO.setup(i, GPIO.OUT)
-        # Right Motor
-        for i in self.right_motor.values():
-            if i == -1:
-                continue
-            GPIO.setup(i, GPIO.OUT)
-
-        # PWM
-        if pwm:
-            self.setup_pwm("right")
-            self.setup_pwm("left")
+        # Motors
+        self.left_motor.setup(pwm, freq)
+        self.right_motor.setup(pwm, freq)
 
         # Left Encoder if installed
         try:
@@ -72,25 +60,6 @@ class Car():
             self.encoder_right.setup()
         except (NameError, AttributeError):
             pass
-
-    def setup_pwm(self, side, freq = 1000):
-        """
-        Setting up the pwm object of a given wheel if changing the speed of the wheels is needed with frequency freq (default 1000Hz)
-
-        Parameters
-        ----------
-        side
-            Can be either "left" or "right"
-            Raises ValueError if neither was given
-        freq
-            Setting what frequency of the pwm signal, default is 1000 Hz
-        """
-        if side == "left":
-            self.left_motor["pwm"] = GPIO.PWM(self.left_motor["enable"], freq)
-        elif side == "right":
-            self.right_motor["pwm"] = GPIO.PWM(self.right_motor["enable"], freq)
-        else:
-            raise ValueError("Invalid Side")
 
     def move_car(self, speed_left, speed_right):
         """
@@ -125,41 +94,13 @@ class Car():
         if side != "left" and side != "right":
             raise ValueError("Invalid Side")
 
-        absSpeed = abs(speed)
-
         # Deciding which wheel is beeing used
         if side == "left":
             wheel = self.left_motor
         else:
             wheel = self.right_motor
 
-        # Retrieving values from the wheel
-        pin1 = wheel.get("pin1")
-        pin2 = wheel.get("pin2")
-        enable = wheel.get("enable")
-
-        # Changes speed if pwm is set up
-        if wheel["pwm"] != -1:
-            if absSpeed > 100 or absSpeed < 0:
-                absSpeed = 100
-                wheel.get("pwm").start(absSpeed)
-            if absSpeed == 0:
-                wheel.get("pwm").stop()
-            else:
-                wheel.get("pwm").start(absSpeed)
-        else:
-            GPIO.output(enable, True)
-
-        # Speed Direction logic
-        if speed == 0:
-            GPIO.output(pin1, False)
-            GPIO.output(pin2, False)
-        elif speed > 0:
-            GPIO.output(pin1, True)
-            GPIO.output(pin2, False)
-        else:
-            GPIO.output(pin1, False)
-            GPIO.output(pin2, True)
+        wheel.set_speed(speed)
 
     def forward(self, speed = 100):
         """
