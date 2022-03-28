@@ -349,3 +349,55 @@ class Encoder:
             The distance traveled as recorded by the encoder in the unit of the diameter given
         """
         return self.count_to_distance(self.count)
+
+class Wheel:
+    def __init__(self, enable, pin1, pin2):
+        self.enable = enable
+        self.pin1 = pin1
+        self.pin2 = pin2
+
+    def set_speed(self, speed):
+        """
+        Set the speed of the wheel
+
+        Parameters
+        ----------
+        speed
+            The speed to set the wheel into
+            Raises a ValueError if speed is greater than 100 or less than -100
+        """
+        absSpeed = abs(speed)
+
+        # Deciding which wheel is beeing used
+        if side == "left":
+            wheel = self.left_motor
+        else:
+            wheel = self.right_motor
+
+        # Retrieving values from the wheel
+        pin1 = wheel.get("pin1")
+        pin2 = wheel.get("pin2")
+        enable = wheel.get("enable")
+
+        # Changes speed if pwm is set up
+        if wheel["pwm"] != -1:
+            if absSpeed > 100 or absSpeed < 0:
+                raise ValueError("Invalid Speed")
+            if absSpeed == 0:
+                wheel.get("pwm").stop()
+            else:
+                wheel.get("pwm").start(absSpeed)
+        else:
+            GPIO.output(enable, True)
+
+        # Speed Direction logic
+        if speed == 0:
+            GPIO.output(pin1, False)
+            GPIO.output(pin2, False)
+        elif speed > 0:
+            GPIO.output(pin1, True)
+            GPIO.output(pin2, False)
+        else:
+            GPIO.output(pin1, False)
+            GPIO.output(pin2, True)
+        pass
