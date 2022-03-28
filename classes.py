@@ -352,10 +352,23 @@ class Encoder:
         return self.count_to_distance(self.count)
 
 class Wheel:
+    """
+    Creates a wheel object
+
+    Parameters
+    ----------
+    enable
+        Enable pin of the wheel
+    pin1
+        One of GPIO pin number
+    pin2
+        One of GPIO pin number
+    """
     def __init__(self, enable, pin1, pin2):
         self.enable = enable
         self.pin1 = pin1
         self.pin2 = pin2
+        self.pwm = -1
 
     def set_speed(self, speed):
         """
@@ -369,25 +382,21 @@ class Wheel:
         """
         absSpeed = abs(speed)
 
-        # Deciding which wheel is beeing used
-        if side == "left":
-            wheel = self.left_motor
-        else:
-            wheel = self.right_motor
-
         # Retrieving values from the wheel
-        pin1 = wheel.get("pin1")
-        pin2 = wheel.get("pin2")
-        enable = wheel.get("enable")
+        pin1 = self.pin1
+        pin2 = self.pin2
+        enable = self.enable
+        pwm = self.pwm
 
         # Changes speed if pwm is set up
-        if wheel["pwm"] != -1:
+        if pwm != -1:
             if absSpeed > 100 or absSpeed < 0:
-                raise ValueError("Invalid Speed")
+                absSpeed = 100
+                pwm.start(absSpeed)
             if absSpeed == 0:
-                wheel.get("pwm").stop()
+                pwm.stop()
             else:
-                wheel.get("pwm").start(absSpeed)
+                pwm.start(absSpeed)
         else:
             GPIO.output(enable, True)
 
@@ -401,7 +410,17 @@ class Wheel:
         else:
             GPIO.output(pin1, False)
             GPIO.output(pin2, True)
-        pass
+
+    def setup_pwm(self, freq = 1000):
+        """
+        Setting up the pwm object of the wheel if changing the speed of the wheels is needed with frequency freq (default 1000Hz)
+
+        Parameters
+        ----------
+        freq
+            Setting what frequency of the pwm signal, default is 1000 Hz
+        """
+        self.pwm = GPIO.PWM(self.enable, freq)
 
 class PID:
     """
