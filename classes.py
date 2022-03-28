@@ -422,6 +422,24 @@ class Wheel:
         """
         self.pwm = GPIO.PWM(self.enable, freq)
 
+    def setup(self, pwm = False, freq = 1000):
+        """
+        Sets up the GPIO modes of the pins
+
+        Parameters
+        ----------
+        pwm
+            Decides if pwm is needed or not, by default False
+        freq
+            Setting what frequency of the pwm signal, default is 1000 Hz
+        """
+        GPIO.setup(self.enable, GPIO.OUT)
+        GPIO.setup(self.pin1, GPIO.OUT)
+        GPIO.setup(self.pin2, GPIO.OUT)
+
+        if pwm:
+            self.setup_pwm(freq)
+
 class PID:
     """
     Creates a PID object
