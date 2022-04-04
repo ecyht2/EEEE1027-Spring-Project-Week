@@ -29,10 +29,14 @@ class Car():
         # Setting up Left Encoder
         if encoder_left[2] != -1:
             self.encoder_left = Encoder(encoder_left[0], encoder_left[1], encoder_left[2])
+        else:
+            self.encoder_left = -1
 
         # Setting up Right Encoder
         if encoder_right[2] != -1:
             self.encoder_right = Encoder(encoder_right[0], encoder_right[1], encoder_right[2])
+        else:
+            self.encoder_right = -1
 
     def setup(self, pwm = False, freq = 1000):
         """
@@ -50,16 +54,15 @@ class Car():
         self.right_motor.setup(pwm, freq)
 
         # Left Encoder if installed
-        try:
+        if self.encoder_left != -1
             self.encoder_left.setup()
-        except (NameError, AttributeError):
-            pass
 
         # Right Encoder if installed
-        try:
+        if self.encoder_right != -1
             self.encoder_right.setup()
-        except (NameError, AttributeError):
-            pass
+
+    def reset_encoders(self):
+        self.encoder_right
 
     def move_car(self, speed_left, speed_right):
         """
@@ -102,7 +105,7 @@ class Car():
 
         wheel.set_speed(speed)
 
-    def forward(self, speed = 100):
+    def forward(self, speed = 100, distance = 0):
         """
         Moves the car forwards according to speed
 
@@ -115,7 +118,17 @@ class Car():
         if speed < 0:
             raise ValueError("Invalid Speed")
 
-        self.move_car(speed, speed)
+        if distance = 0:
+            self.move_car(speed, speed)
+        else:
+            self.reset_encoders()
+            distance_traveled = self.get_distance()
+            while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+                self.update_encoders()
+                distance_traveled = self.get_distance()
+                self.move_car(speed, speed)
+
+                
 
     def backward(self, speed = 100):
         """
