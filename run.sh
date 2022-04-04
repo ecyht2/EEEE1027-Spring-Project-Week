@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-source ~/project/env/bin/activate && python3 ~/project/"$1"
+cd ~/project/
+source env/bin/activate && python3 "$1"
