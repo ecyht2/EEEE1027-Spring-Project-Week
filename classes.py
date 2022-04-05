@@ -20,6 +20,8 @@ class Car():
     encoder_left
         A tuple of of the pins of the right encoder in the form of (digital pin, diameter of the wheel, number of holes in the encoder wheel)
         Default is set to all -1 (off)
+    diameter
+        The distance between the wheels
     """
     def __init__(self, left, right,
                  encoder_left = (-1, -1, -1), encoder_right = (-1, -1, -1),
@@ -117,6 +119,22 @@ class Car():
         left = self.encoder_left.update()
 
     def angle_to_distance(self, angle, mode):
+        """
+        Returns the distance the wheel need to travel for the car to turn at an angle angle
+        using the turning mode mode
+
+        Parameters
+        ----------
+        angle
+            The angle to turn the car at in radians
+        mode
+            The turning mode of the car
+            Read documentation of turn_right or turn_left method for more information about the modes
+
+        Returns
+        -------
+        None
+        """
         if angle < 0:
             raise ValueError("Invalid Angle")
 
@@ -660,6 +678,16 @@ class PID:
         return PID
 
 class Colour:
+    """
+    Creates a colour object that filters out a specific line colour
+
+    Parameters
+    ----------
+    colour
+        What colour to filter
+    config
+        The config where the threshold HSV values is stored
+    """
     def __init__(self, colour, config = "config.json"):
         with open(config, "r") as f:
             configuration = json.load(f)
@@ -676,7 +704,26 @@ class Colour:
             raise ValueError("Invalid Colour")
 
     def get_image(self):
+        """
+        Returns the image array of the processed image
+
+        Returns
+            numpy.ndarray
+            The processed image
+        """
         return self.image
 
     def update_image(self, input_image):
+        """
+        Update the image precessed image used to input_image
+
+        Parameters
+        ----------
+        input_image
+            The image to change to
+
+        Returns
+        -------
+        None
+        """
         self.image = cv.inRange(input_image, self.__color_low, self.__color_high)
