@@ -146,41 +146,84 @@ class Car():
     def forward(self, speed = 100, distance = 0):
         """
         Moves the car forwards according to speed
+        If distance is specified, the car will move forward for that amount of distance
+        The distance traveled is measured in the unit of wheel diameter given to the encoder
 
         Prameters
         ---------
         speed
             The speed to move forward in, default is 100
             Raises a ValueError if speed is greater than 100 or less than 0
+        distance
+            The distance the car should travel
+            Raises a ValueError if distance is negative
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
+        if distance < 0:
+            raise ValueError("Invalid Distance")
 
-        if distance = 0:
+        if distance == 0:
             self.move_car(speed, speed)
         else:
             self.reset_encoders()
             distance_traveled = self.get_distance()
+            speedL, speedR = (speed, speed)
             while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
                 self.update_encoders()
                 distance_traveled = self.get_distance()
-                self.move_car(speed, speed)
+                self.move_car(speedL, speedR)
 
-                
+                if distance_traveled[0] > distance_traveled[1]:
+                    speedL *= 0.5
+                    speedR = speed
+                elif distance_traveled[1] > distance_traveled[0]:
+                    speedL = speed
+                    speedR *= 0.5
+                else:
+                    speedL = speed
+                    speedR = speed
 
     def backward(self, speed = 100):
         """
         Moves the car backwards according to speed
+        If distance is specified, the car will move backward for that amount of distance
+        The distance traveled is measured in the unit of wheel diameter given to the encoder
 
         Prameters
         ---------
         speed
             The speed to move backwards in, default is 100
             Raises a ValueError if speed is greater than 100 or less than 0
+        distance
+            The distance the car should travel
+            Raises a ValueError if distance is negative
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
-        self.move_car(-speed, -speed)
+        if distance < 0:
+            raise ValueError("Invalid Distance")
+
+        if distance == 0:
+            self.move_car(-speed, -speed)
+        else:
+            self.reset_encoders()
+            distance_traveled = self.get_distance()
+            speedL, speedR = (-speed, -speed)
+            while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+                self.update_encoders()
+                distance_traveled = self.get_distance()
+                self.move_car(speedL, speedR)
+
+                if distance_traveled[0] > distance_traveled[1]:
+                    speedL *= 0.5
+                    speedR = -speed
+                elif distance_traveled[1] > distance_traveled[0]:
+                    speedL = -speed
+                    speedR *= 0.5
+                else:
+                    speedL = -speed
+                    speedR = -speed
 
     def turn_left(self, speed = 100, mode = 0):
         """
