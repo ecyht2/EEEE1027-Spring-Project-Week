@@ -19,6 +19,7 @@ import picamera
 import numpy as np
 import robot
 from classes import PID, Colour
+from math import atan
 
 # Initialize camera
 camera = picamera.PiCamera()
@@ -35,12 +36,26 @@ K_P = 0.25
 K_I = 0
 K_D = 0.25
 baseline = 96
-basespeed = 30
+basespeed = 35
 pid = PID(baseline, K_P, K_I, K_D)
-red = Colour("red")
-green = Colour("green")
-blue = Colour("blue")
-yellow = Colour("yellow")
+colours = {
+	"green": {
+		"class": Colour("green"),
+		"turned": False
+	},
+	"blue": {
+		"class": Colour("blue"),
+		"turned": False
+	},
+	"yellow": {
+		"class": Colour("yellow"),
+		"turned": False
+	},
+	"red": {
+		"class": Colour("red"),
+		"turned": False
+	}
+}
 
 def loop():
 	# Loop over all frames captured by camera indefinitely
@@ -70,15 +85,12 @@ def loop():
 		mask = cv2.erode(thresh, None, iterations=2)
 		mask = cv2.dilate(mask, None, iterations=2)
 
-		blue.update_image(blur)
-		red.update_image(blur)
-		green.update_image(blur)
-		yellow.update_image(blur)
+		for colour in colours.values():
+			colour["class"].update_image(image)
+			colour["contours"], colour["hierarchy"] = cv2.findContours(colour["class"].get_image(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-		thresh = thresh + blue.get_image() + red.get_image() + green.get_image() + yellow.get_image()
 		# Find all contours in frame
 		contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
 
 		# Find x-axis centroid of largest contour and cut power to appropriate motor
 		# to recenter camera on centroid.
@@ -99,9 +111,23 @@ def loop():
 
 			# Moving Car
 			car.move_car(basespeed - PID, basespeed + PID)
-			print(PID, cx)
 
-		#cv2.imshow('mask', mask)
+			for name, colour in colours.items():
+				if len(colour["contours"]) > 0:
+					c_colour = max(colour["contours"], key = cv2.contourArea)
+					M_g = cv2.moments(c_colour)
+					x = int(M['m10']/M['m00'])
+					y = int(M['m01']/M['m00'])
+					area = cv2.contourArea(c_colour)
+					if colour["turned"] == False and area > 10:
+						if x >= 102:
+							car.turn_right(basespeed, 1, atan(x/y))
+							colour["turned"] = True
+						elif x <= 90:
+							car.turn_left(basespeed, 1, atan(x/y))
+							colour["turned"] = True
+
+		#cv2.imshow('threshold', thresh)
 		#cv2.imshow('image', image)
 		if key == ord("q"):
 			break
