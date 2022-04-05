@@ -56,15 +56,51 @@ class Car():
         self.right_motor.setup(pwm, freq)
 
         # Left Encoder if installed
-        if self.encoder_left != -1
+        if self.encoder_left != -1:
             self.encoder_left.setup()
 
         # Right Encoder if installed
-        if self.encoder_right != -1
+        if self.encoder_right != -1:
             self.encoder_right.setup()
 
     def reset_encoders(self):
-        self.encoder_right
+        """
+        Resets the counters of both encoders
+        """
+        if self.encoder_right == -1:
+            raise
+        self.encoder_right.reset()
+        self.encoder_left.reset()
+
+    def get_distance(self):
+        """
+        Returns the distance traveled by both wheels
+
+        Returns
+        -------
+        Tuple
+        Distance traveled by the left and right wheels
+        (left, right)
+        """
+        right = self.encoder_right.get_distance()
+        left = self.encoder_left.get_distance()
+
+        return left, right
+
+    def get_counter(self):
+        """
+        Returns the counter measured by both encoder
+
+        Returns
+        -------
+        Tuple
+        Counter measured by the left and right encoder
+        (left, right)
+        """
+        right = self.encoder_right.get_counter()
+        left = self.encoder_left.get_counter()
+
+        return left, right
 
     def move_car(self, speed_left, speed_right):
         """
