@@ -67,8 +67,7 @@ class Car():
         """
         Resets the counters of both encoders
         """
-        if self.encoder_right == -1:
-            raise
+        assert self.encoder_right == -1 or self.encoder_left == -1, "Encoders aren't Installed properly"
         self.encoder_right.reset()
         self.encoder_left.reset()
 
@@ -82,6 +81,7 @@ class Car():
         Distance traveled by the left and right wheels
         (left, right)
         """
+        assert self.encoder_right == -1 or self.encoder_left == -1, "Encoders aren't Installed properly"
         right = self.encoder_right.get_distance()
         left = self.encoder_left.get_distance()
 
@@ -97,6 +97,7 @@ class Car():
         Counter measured by the left and right encoder
         (left, right)
         """
+        assert self.encoder_right == -1 or self.encoder_left == -1, "Encoders aren't Installed properly"
         right = self.encoder_right.get_counter()
         left = self.encoder_left.get_counter()
 
@@ -148,6 +149,7 @@ class Car():
         Moves the car forwards according to speed
         If distance is specified, the car will move forward for that amount of distance
         The distance traveled is measured in the unit of wheel diameter given to the encoder
+        Both Encoders must be installed for distance travel to work
 
         Prameters
         ---------
@@ -189,6 +191,7 @@ class Car():
         Moves the car backwards according to speed
         If distance is specified, the car will move backward for that amount of distance
         The distance traveled is measured in the unit of wheel diameter given to the encoder
+        Both Encoders must be installed for distance travel to work
 
         Prameters
         ---------
