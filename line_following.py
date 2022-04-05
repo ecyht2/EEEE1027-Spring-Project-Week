@@ -18,7 +18,7 @@ import cv2
 import picamera
 import numpy as np
 import robot
-from classes import PID
+from classes import PID, Colour
 
 # Initialize camera
 camera = picamera.PiCamera()
@@ -37,6 +37,10 @@ K_D = 0.25
 baseline = 96
 basespeed = 30
 pid = PID(baseline, K_P, K_I, K_D)
+red = Colour("red")
+green = Colour("green")
+blue = Colour("blue")
+yellow = Colour("yellow")
 
 def loop():
 	# Loop over all frames captured by camera indefinitely
@@ -66,6 +70,12 @@ def loop():
 		mask = cv2.erode(thresh, None, iterations=2)
 		mask = cv2.dilate(mask, None, iterations=2)
 
+		blue.update_image(blur)
+		red.update_image(blur)
+		green.update_image(blur)
+		yellow.update_image(blur)
+
+		thresh = thresh + blue.get_image() + red.get_image() + green.get_image() + yellow.get_image()
 		# Find all contours in frame
 		contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
