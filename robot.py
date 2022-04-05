@@ -38,6 +38,8 @@ def exit():
 if __name__ == '__main__':
     setup()
     try:
-        loop()
+        #loop()
+        #car.turn_left(50, 0, angle=pi)
+        car.forward(speed = 50, distance=100)
     finally:
         exit()

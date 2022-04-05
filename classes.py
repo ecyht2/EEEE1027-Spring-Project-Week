@@ -42,6 +42,9 @@ class Car():
         else:
             self.encoder_right = -1
 
+        # Setting up diameter
+        self.diameter = diameter
+
     def setup(self, pwm = False, freq = 1000):
         """
         Sets up the GPIO modes of the pins
@@ -69,7 +72,7 @@ class Car():
         """
         Resets the counters of both encoders
         """
-        assert self.encoder_right == -1 or self.encoder_left == -1, "Encoders aren't Installed properly"
+        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
         self.encoder_right.reset()
         self.encoder_left.reset()
 
@@ -83,7 +86,7 @@ class Car():
         Distance traveled by the left and right wheels
         (left, right)
         """
-        assert self.encoder_right == -1 or self.encoder_left == -1, "Encoders aren't Installed properly"
+        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
         right = self.encoder_right.get_distance()
         left = self.encoder_left.get_distance()
 
@@ -99,11 +102,19 @@ class Car():
         Counter measured by the left and right encoder
         (left, right)
         """
-        assert self.encoder_right == -1 or self.encoder_left == -1, "Encoders aren't Installed properly"
+        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
         right = self.encoder_right.get_counter()
         left = self.encoder_left.get_counter()
 
         return left, right
+
+    def update_encoders(self):
+        """
+        Update both encoders
+        """
+        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
+        right = self.encoder_right.update()
+        left = self.encoder_left.update()
 
     def angle_to_distance(self, angle, mode):
         if angle < 0:
@@ -112,7 +123,7 @@ class Car():
         if mode == 0:
             return angle*self.diameter/2
         if mode == 1:
-            return anlge*self.diameter
+            return angle*self.diameter
         else:
             raise ValueError("Invalid Mode")
 
@@ -190,11 +201,11 @@ class Car():
                 self.move_car(speedL, speedR)
 
                 if distance_traveled[0] > distance_traveled[1]:
-                    speedL *= 0.5
+                    speedL *= 0.8
                     speedR = speed
                 elif distance_traveled[1] > distance_traveled[0]:
                     speedL = speed
-                    speedR *= 0.5
+                    speedR *= 0.8
                 else:
                     speedL = speed
                     speedR = speed
@@ -289,14 +300,15 @@ class Car():
                     self.update_encoders()
                     distance_traveled = self.get_distance()
                     self.move_car(speedL, speedR)
+                    print(distance_traveled, distance)
 
                     # Speed Logic
                     if distance_traveled[0] > distance_traveled[1]:
-                        speedL *= 0.5
+                        speedL *= 0.8
                         speedR = speed
                     elif distance_traveled[1] > distance_traveled[0]:
                         speedL = -speed
-                        speedR *= 0.5
+                        speedR *= 0.8
                     else:
                         speedL = -speed
                         speedR = speed
