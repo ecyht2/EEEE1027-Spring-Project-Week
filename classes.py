@@ -121,9 +121,9 @@ class Car():
             raise ValueError("Invalid Angle")
 
         if mode == 0:
-            return angle*self.diameter/2
+            return 2*angle*self.diameter/2
         if mode == 1:
-            return angle*self.diameter
+            return 2*angle*self.diameter
         else:
             raise ValueError("Invalid Mode")
 
@@ -201,16 +201,16 @@ class Car():
                 self.move_car(speedL, speedR)
 
                 if distance_traveled[0] > distance_traveled[1]:
-                    speedL *= 0.8
+                    speedL = 0.5*speed
                     speedR = speed
                 elif distance_traveled[1] > distance_traveled[0]:
                     speedL = speed
-                    speedR *= 0.8
+                    speedR = 0.5*speed
                 else:
                     speedL = speed
                     speedR = speed
 
-    def backward(self, speed = 100):
+    def backward(self, speed = 100, distance = 0):
         """
         Moves the car backwards according to speed
         If distance is specified, the car will move backward for that amount of distance
@@ -243,11 +243,11 @@ class Car():
                 self.move_car(speedL, speedR)
 
                 if distance_traveled[0] > distance_traveled[1]:
-                    speedL *= 0.5
+                    speedL = -0.5*speed
                     speedR = -speed
                 elif distance_traveled[1] > distance_traveled[0]:
                     speedL = -speed
-                    speedR *= 0.5
+                    speedR = -0.5*speed
                 else:
                     speedL = -speed
                     speedR = -speed
@@ -300,15 +300,14 @@ class Car():
                     self.update_encoders()
                     distance_traveled = self.get_distance()
                     self.move_car(speedL, speedR)
-                    print(distance_traveled, distance)
 
                     # Speed Logic
                     if distance_traveled[0] > distance_traveled[1]:
-                        speedL *= 0.8
+                        speedL = -0.5*speed
                         speedR = speed
                     elif distance_traveled[1] > distance_traveled[0]:
                         speedL = -speed
-                        speedR *= 0.8
+                        speedR = 0.5*speed
                     else:
                         speedL = -speed
                         speedR = speed
@@ -378,11 +377,11 @@ class Car():
 
                     # Speed Logic
                     if distance_traveled[0] > distance_traveled[1]:
-                        speedL *= 0.5
+                        speedL = 0.5*speed
                         speedR = -speed
                     elif distance_traveled[1] > distance_traveled[0]:
                         speedL = speed
-                        speedR *= 0.5
+                        speedR = -0.5*speed
                     else:
                         speedL = speed
                         speedR = -speed
