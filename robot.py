@@ -6,7 +6,7 @@ from classes import *
 right_wheel = (12, 21, 20)
 left_wheel = (18, 24, 23)
 
-car = Car(left_wheel, right_wheel, (26, 6.5, 20), (19, 6.5, 20))
+car = Car(left_wheel, right_wheel, (26, 6.5, 20), (19, 6.5, 20), 13.5)
 encoderLeft = Encoder(26, 6.5, 20)
 encoderRight = Encoder(19, 6.5, 20)
 
