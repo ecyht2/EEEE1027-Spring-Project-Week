@@ -1,7 +1,7 @@
 import cv2 as cv
 import os
 import json
-
+import time
 from cv2 import WINDOW_AUTOSIZE
 
 slider_max = 255
@@ -108,6 +108,7 @@ class Color_Trackbar:
         with open("config.json", "w") as f:
             json.dump(config, f, indent=4)
 
+
     def update_img(self, image):
         self.img = image
         cv.imshow('Figure', self.img)
@@ -119,19 +120,35 @@ class Color_Trackbar:
 def color_trackbar():
     cap = cv.VideoCapture(0)
     ret, img = cap.read()
-    t = Color_Trackbar(img)
-    t = Color_Trackbar(img)
+    t = Color_Trackbar("red")
+    t.load_values()
     t.GUI()
+
+    # Setting up Time
+    cTime = time.time()
+    stopTime = cTime
     while True:
         ret, img = cap.read()
+        # Flipping the image
+        img = cv2.flip(image, 0)
+        img = cv2.flip(image, +1)
+        #image = image[15:]
+        blur = cv2.GaussianBlur(img,(5,5),0)
 
-        #t.load_values()
-        t.update_img(img)
-        k = cv.waitKey(1)
+        # Saved Text
+        cTime = time.time()
+        if stopTime >= cTime:
+            cv.putText(blur, 'Saved')
 
-        if k == ord('s'):
-            t.save_values(red)
-        elif k == 27:
+        # Updating Tracbar
+        t.update_img(blur)
+
+        # Create key to break for loop
+        k = cv.waitKey(1) & 0xFF
+        if k == ord("s"):
+            stopTime = cTime + 2
+            t.save_values()
+        elif k == ord("q"):
             cv.destroyAllWindows()
             break
 
