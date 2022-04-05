@@ -21,7 +21,9 @@ class Car():
         A tuple of of the pins of the right encoder in the form of (digital pin, diameter of the wheel, number of holes in the encoder wheel)
         Default is set to all -1 (off)
     """
-    def __init__(self, left, right, encoder_left = (-1, -1, -1), encoder_right = (-1, -1, -1)):
+    def __init__(self, left, right,
+                 encoder_left = (-1, -1, -1), encoder_right = (-1, -1, -1),
+                 diameter = 0):
         # Setting up the Left Wheel
         self.left_motor = Wheel(left[0], left[1], left[2])
 
@@ -102,6 +104,17 @@ class Car():
         left = self.encoder_left.get_counter()
 
         return left, right
+
+    def angle_to_distance(self, angle, mode):
+        if angle < 0:
+            raise ValueError("Invalid Angle")
+
+        if mode == 0:
+            return angle*self.diameter/2
+        if mode == 1:
+            return anlge*self.diameter
+        else:
+            raise ValueError("Invalid Mode")
 
     def move_car(self, speed_left, speed_right):
         """
@@ -228,9 +241,11 @@ class Car():
                     speedL = -speed
                     speedR = -speed
 
-    def turn_left(self, speed = 100, mode = 0):
+    def turn_left(self, speed = 100, mode = 0, angle = 0):
         """
         Turns the car left according to speed
+        If angle is specified, the car will turn at that angle in radians
+        The diameter of the car must be specified for the turning angle to work
 
         Prameters
         ---------
@@ -241,20 +256,70 @@ class Car():
             Decides how the car will turn
             if mode is 0, one wheel will move forward and the other will move backwards (turn in the same spot)
             if mode is 1, one wheel will move forward and the other will stop (turn while still moving forward)
+        angle
+            The angle to turn the car
+            Raises a ValueError if speed is less than 0
         """
+        # Checking Conditions
         if speed < 0:
             raise ValueError("Invalid Speed")
+        if angle < 0:
+            raise ValueError("Invalid Angle")
 
-        if mode == 0:
-            self.move_car(-speed, speed)
-        elif mode == 1:
-            self.move_car(0, speed)
+        # Checking If angle is specified
+        if angle == 0:
+            # Checking Mode
+            if mode == 0:
+                self.move_car(-speed, speed)
+            elif mode == 1:
+                self.move_car(0, speed)
+            else:
+                raise ValueError("Invalid Mode")
         else:
-            raise ValueError("Invalid Mode")
+            # Checking Mode
+            if mode == 0:
+                # Getting Initial Condition
+                self.reset_encoders()
+                distance = self.angle_to_distance(angle, 0)
+                distance_traveled = self.get_distance()
+                speedL, speedR = (-speed, speed)
+                # Looping until completed
+                while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+                    # Update Condition
+                    self.update_encoders()
+                    distance_traveled = self.get_distance()
+                    self.move_car(speedL, speedR)
 
-    def turn_right(self, speed = 100, mode = 0):
+                    # Speed Logic
+                    if distance_traveled[0] > distance_traveled[1]:
+                        speedL *= 0.5
+                        speedR = speed
+                    elif distance_traveled[1] > distance_traveled[0]:
+                        speedL = -speed
+                        speedR *= 0.5
+                    else:
+                        speedL = -speed
+                        speedR = speed
+            elif mode == 1:
+                # Getting Initial Condition
+                self.reset_encoders()
+                distance = self.angle_to_distance(angle, 1)
+                distance_traveled = self.get_distance()
+                speedL, speedR = (0, speed)
+                # Looping until completed
+                while distance_traveled[1] <= distance:
+                    # Update Condition
+                    self.update_encoders()
+                    distance_traveled = self.get_distance()
+                    self.move_car(speedL, speedR)
+            else:
+                raise ValueError("Invalid Mode")
+
+    def turn_right(self, speed = 100, mode = 0, angle = 0):
         """
         Turns the car right according to speed
+        If angle is specified, the car will turn at that angle in radians
+        The diameter of the car must be specified for the turning angle to work
 
         Prameters
         ---------
@@ -265,16 +330,64 @@ class Car():
             Decides how the car will turn
             if mode is 0, one wheel will move forward and the other will move backwards (turn in the same spot)
             if mode is 1, one wheel will move forward and the other will stop (turn while still moving forward)
+        angle
+            The angle to turn the car
+            Raises a ValueError if speed is less than 0
         """
+        # Checking Conditions
         if speed < 0:
             raise ValueError("Invalid Speed")
+        if angle < 0:
+            raise ValueError("Invalid Angle")
 
-        if mode == 0:
-            self.move_car(speed, -speed)
-        elif mode == 1:
-            self.move_car(speed, 0)
+        # Checking If angle is specified
+        if angle == 0:
+            # Checking Mode
+            if mode == 0:
+                self.move_car(speed, -speed)
+            elif mode == 1:
+                self.move_car(speed, 0)
+            else:
+                raise ValueError("Invalid Mode")
         else:
-            raise ValueError("Invalid Mode")
+            # Checking Mode
+            if mode == 0:
+                # Getting Initial Condition
+                self.reset_encoders()
+                distance = self.angle_to_distance(angle, 0)
+                distance_traveled = self.get_distance()
+                speedL, speedR = (speed, -speed)
+                # Looping until completed
+                while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+                    # Update Condition
+                    self.update_encoders()
+                    distance_traveled = self.get_distance()
+                    self.move_car(speedL, speedR)
+
+                    # Speed Logic
+                    if distance_traveled[0] > distance_traveled[1]:
+                        speedL *= 0.5
+                        speedR = -speed
+                    elif distance_traveled[1] > distance_traveled[0]:
+                        speedL = speed
+                        speedR *= 0.5
+                    else:
+                        speedL = speed
+                        speedR = -speed
+            elif mode == 1:
+                # Getting Initial Condition
+                self.reset_encoders()
+                distance = self.angle_to_distance(angle, 1)
+                distance_traveled = self.get_distance()
+                speedL, speedR = (speed, 0)
+                # Looping until completed
+                while distance_traveled[0] <= distance:
+                    # Update Condition
+                    self.update_encoders()
+                    distance_traveled = self.get_distance()
+                    self.move_car(speedL, speedR)
+            else:
+                raise ValueError("Invalid Mode")
 
     def stop(self):
         """
