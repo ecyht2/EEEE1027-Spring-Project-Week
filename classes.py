@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import RPi.GPIO as GPIO
 from math import pi
+import json
+import cv2
 
 class Car():
     """
@@ -450,3 +452,25 @@ class PID:
         """
         PID = self.K_P*self.P + self.K_I*self.I + self.K_D*self.D
         return PID
+
+class Colour:
+    def __init__(self, colour, config = "config.json"):
+        with open(config, "r") as f:
+            configuration = json.load(f)
+
+        if colour in configuration:
+            self.colour = colour
+
+            self.H_l, self.S_l, self.V_l = c["low"]["H"], c["low"]["S"], c["low"]["V"]
+            self.H_h, self.S_h, self.V_h = c["high"]["H"], c["high"]["S"], c["high"]["V"]
+
+            self.__color_low = (self.H_l, self.S_l, self.V_l)
+            self.__color_high = (self.H_h, self.S_h, self.V_h)
+        else:
+            raise ValueError("Invalid Colour")
+
+    def get_image(self):
+        return self.image
+
+    def update_image(self, input_image):
+        self.image = cv.inRange(input_image, self.__color_low, self.__color_high)
