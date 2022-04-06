@@ -32,28 +32,24 @@ time.sleep(0.1)
 car = robot.car
 
 # Initialize PID values
-K_P = 0.25
+K_P = 0.4
 K_I = 0
-K_D = 0.25
+K_D = 0.6
 baseline = 96
-basespeed = 35
+basespeed = 30
 pid = PID(baseline, K_P, K_I, K_D)
 colours = {
-	"green": {
-		"class": Colour("green"),
-		"turned": False
-	},
+#	"green": {
+#		"class": Colour("green"),
+#	},
 	"blue": {
 		"class": Colour("blue"),
-		"turned": False
 	},
-	"yellow": {
-		"class": Colour("yellow"),
-		"turned": False
-	},
+#	"yellow": {
+#		"class": Colour("yellow"),
+#	},
 	"red": {
 		"class": Colour("red"),
-		"turned": False
 	}
 }
 
@@ -87,7 +83,7 @@ def loop():
 
 		for colour in colours.values():
 			colour["class"].update_image(image)
-			colour["contours"], colour["hierarchy"] = cv2.findContours(colour["class"].get_image(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+			colour["contours"] = colour["class"].get_contours()
 
 		# Find all contours in frame
 		contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -105,27 +101,22 @@ def loop():
 			# Find x-axis centroid using image moments
 			cx = int(M['m10']/M['m00'])
 
-			# Updating PID
-			pid.update(cx)
-			PID = pid.get_PID()
+		for name, colour in colours.items():
+			if len(colour["contours"]) > 0:
+				c_colour = max(colour["contours"], key = cv2.contourArea)
+				M_c = cv2.moments(c_colour)
+				x = int(M_c['m10']/(M_c['m00'] + 1e-5))
+				y = int(M_c['m01']/(M_c['m00'] + 1e-5))
+				area = cv2.contourArea(c_colour)
+				if area > 600:
+					print("x: {}".format(x), "A: {}".format(area), "c: {}".format(name))
+					cx = x
 
-			# Moving Car
-			car.move_car(basespeed - PID, basespeed + PID)
-
-			for name, colour in colours.items():
-				if len(colour["contours"]) > 0:
-					c_colour = max(colour["contours"], key = cv2.contourArea)
-					M_g = cv2.moments(c_colour)
-					x = int(M['m10']/M['m00'])
-					y = int(M['m01']/M['m00'])
-					area = cv2.contourArea(c_colour)
-					if colour["turned"] == False and area > 10:
-						if x >= 102:
-							car.turn_right(basespeed, 1, atan(x/y))
-							colour["turned"] = True
-						elif x <= 90:
-							car.turn_left(basespeed, 1, atan(x/y))
-							colour["turned"] = True
+		# Updating PID
+		pid.update(cx)
+		PID = pid.get_PID()
+		# Moving Car
+		car.move_car(basespeed - PID, basespeed + PID)
 
 		#cv2.imshow('threshold', thresh)
 		#cv2.imshow('image', image)
