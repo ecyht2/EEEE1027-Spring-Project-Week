@@ -709,7 +709,8 @@ class Colour:
         Returns the image array of the processed image
 
         Returns
-            numpy.ndarray
+        -------
+        numpy.ndarray
             The processed image
         """
         return self.image
@@ -728,3 +729,15 @@ class Colour:
         None
         """
         self.image = cv2.inRange(input_image, self.__color_low, self.__color_high)
+        self.contours, self.hierarchy = cv2.findContours(self.image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    def get_contours(self):
+        """
+        Returns the contours found
+
+        Returns
+        -------
+        Tuple
+            The contours found
+        """
+        return self.contours
