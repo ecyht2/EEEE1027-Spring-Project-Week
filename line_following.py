@@ -19,6 +19,7 @@ import picamera
 import numpy as np
 import robot
 from classes import PID, Colour
+from math import atan
 
 # Initialize camera
 camera = picamera.PiCamera()
@@ -31,16 +32,26 @@ time.sleep(0.1)
 car = robot.car
 
 # Initialize PID values
-K_P = 0.25
+K_P = 0.4
 K_I = 0
-K_D = 0.25
+K_D = 0.6
 baseline = 96
 basespeed = 30
 pid = PID(baseline, K_P, K_I, K_D)
-red = Colour("red")
-green = Colour("green")
-blue = Colour("blue")
-yellow = Colour("yellow")
+colours = {
+#	"green": {
+#		"class": Colour("green"),
+#	},
+	"blue": {
+		"class": Colour("blue"),
+	},
+#	"yellow": {
+#		"class": Colour("yellow"),
+#	},
+	"red": {
+		"class": Colour("red"),
+	}
+}
 
 def loop():
 	# Loop over all frames captured by camera indefinitely
@@ -70,15 +81,12 @@ def loop():
 		mask = cv2.erode(thresh, None, iterations=2)
 		mask = cv2.dilate(mask, None, iterations=2)
 
-		blue.update_image(blur)
-		red.update_image(blur)
-		green.update_image(blur)
-		yellow.update_image(blur)
+		for colour in colours.values():
+			colour["class"].update_image(image)
+			colour["contours"] = colour["class"].get_contours()
 
-		thresh = thresh + blue.get_image() + red.get_image() + green.get_image() + yellow.get_image()
 		# Find all contours in frame
 		contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
 
 		# Find x-axis centroid of largest contour and cut power to appropriate motor
 		# to recenter camera on centroid.
@@ -93,15 +101,24 @@ def loop():
 			# Find x-axis centroid using image moments
 			cx = int(M['m10']/M['m00'])
 
-			# Updating PID
-			pid.update(cx)
-			PID = pid.get_PID()
+		for name, colour in colours.items():
+			if len(colour["contours"]) > 0:
+				c_colour = max(colour["contours"], key = cv2.contourArea)
+				M_c = cv2.moments(c_colour)
+				x = int(M_c['m10']/(M_c['m00'] + 1e-5))
+				y = int(M_c['m01']/(M_c['m00'] + 1e-5))
+				area = cv2.contourArea(c_colour)
+				if area > 600:
+					print("x: {}".format(x), "A: {}".format(area), "c: {}".format(name))
+					cx = x
 
-			# Moving Car
-			car.move_car(basespeed - PID, basespeed + PID)
-			print(PID, cx)
+		# Updating PID
+		pid.update(cx)
+		PID = pid.get_PID()
+		# Moving Car
+		car.move_car(basespeed - PID, basespeed + PID)
 
-		#cv2.imshow('mask', mask)
+		#cv2.imshow('threshold', thresh)
 		#cv2.imshow('image', image)
 		if key == ord("q"):
 			break

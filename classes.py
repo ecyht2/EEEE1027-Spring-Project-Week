@@ -690,10 +690,11 @@ class Colour:
     """
     def __init__(self, colour, config = "config.json"):
         with open(config, "r") as f:
-            configuration = json.load(f)
+            c = json.load(f)
 
-        if colour in configuration:
+        if colour in c:
             self.colour = colour
+            c = c[colour]["color"]
 
             self.H_l, self.S_l, self.V_l = c["low"]["H"], c["low"]["S"], c["low"]["V"]
             self.H_h, self.S_h, self.V_h = c["high"]["H"], c["high"]["S"], c["high"]["V"]
@@ -708,7 +709,8 @@ class Colour:
         Returns the image array of the processed image
 
         Returns
-            numpy.ndarray
+        -------
+        numpy.ndarray
             The processed image
         """
         return self.image
@@ -726,4 +728,16 @@ class Colour:
         -------
         None
         """
-        self.image = cv.inRange(input_image, self.__color_low, self.__color_high)
+        self.image = cv2.inRange(input_image, self.__color_low, self.__color_high)
+        self.contours, self.hierarchy = cv2.findContours(self.image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    def get_contours(self):
+        """
+        Returns the contours found
+
+        Returns
+        -------
+        Tuple
+            The contours found
+        """
+        return self.contours
