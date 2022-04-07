@@ -1,3 +1,5 @@
+# This is a modified version of https://github.com/cher-liang/UNM-Robotics-OpenCV-Workshop/blob/master/src/utils/color_trackbar.py by cher-liang
+# All credits goes to them
 import cv2 as cv
 import os
 import json
