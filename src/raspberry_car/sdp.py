@@ -34,7 +34,7 @@ def advertise_service(channel: int = 1):
     # https://github.com/AnesBenmerzoug/Bluetooth_HID/blob/master/sdp_record.xml
     # https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/Assigned%20Numbers.pdf
     # http://www.bluecove.org/bluecove/apidocs/javax/bluetooth/ServiceRecord.html
-    service_record = """
+    service_record = f"""
     <?xml version="1.0" encoding="UTF-8" ?>
     <record>
     <attribute id="0x0001">
@@ -46,7 +46,7 @@ def advertise_service(channel: int = 1):
         <sequence>
         <sequence>
             <uuid value="0x0003"/>
-            <uint8 value="1" name="channel"/>
+            <uint8 value="{channel}" name="channel"/>
         </sequence>
         </sequence>
     </attribute>
