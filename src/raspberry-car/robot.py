@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import signal
+import sys
+
 import RPi.GPIO as GPIO
-from time import sleep, time
-from classes import *
+
+from classes import Car, Encoder
 
 right_wheel = (12, 21, 20)
 left_wheel = (18, 24, 23)
@@ -10,6 +13,7 @@ car = Car(left_wheel, right_wheel, (26, 6.5, 20), (19, 6.5, 20), 13.5)
 encoderLeft = Encoder(26, 6.5, 20)
 encoderRight = Encoder(19, 6.5, 20)
 
+
 def setup():
     print("Program has Started")
     GPIO.setmode(GPIO.BCM)
@@ -17,6 +21,7 @@ def setup():
     car.setup(True)
     encoderLeft.setup()
     encoderRight.setup()
+
 
 def loop():
     while True:
@@ -29,6 +34,7 @@ def loop():
             car.stop()
             break
 
+
 def exit():
     car.move_car(0, 0)
     GPIO.cleanup()
@@ -36,6 +42,9 @@ def exit():
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
+
     setup()
     try:
         loop()
