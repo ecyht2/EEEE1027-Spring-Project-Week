@@ -8,6 +8,7 @@ import signal
 import socket
 import sys
 import time
+import argparse
 from multiprocessing import Process, queues
 from types import NoneType
 from typing import NoReturn
@@ -88,8 +89,24 @@ def recieve_data(bluetooth_address: str | NoneType = "", channel: int = 1,
 
 
 if __name__ == '__main__':
-    thread_advertise = Process(target=sdp.advertise_service, args=(1,))
-    thread_socket = Process(target=recieve_data, args=("",))
+    def parse_arguments():
+        parser = argparse.ArgumentParser(description="""\
+        A simple Python script to receive messages from a client over
+        Bluetooth using Python sockets (with Python 3.3 or above).""")
+
+        parser.add_argument('-c', '--channel', default=1, type=int,
+                            help="RFCOMM channel to use.")
+        parser.add_argument('-b', '--baddr', default="",
+                            help="Bluetooth device address to use.")
+
+        return parser.parse_args()
+
+    args = parse_arguments()
+
+    thread_advertise = Process(target=sdp.advertise_service,
+                               args=(args.channel,))
+    thread_socket = Process(target=recieve_data,
+                            args=(args.baddr, args.channel))
 
     signal.signal(signal.SIGTERM, lambda a, b: sys.exit(0))
     signal.signal(signal.SIGINT, lambda a, b: sys.exit(0))
