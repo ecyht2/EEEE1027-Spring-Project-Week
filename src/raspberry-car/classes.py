@@ -1,31 +1,36 @@
 #!/usr/bin/env python
-import RPi.GPIO as GPIO
-from math import pi
 import json
+from math import pi
+
 import cv2
+import RPi.GPIO as GPIO
+
 
 class Car():
-    """
-    Creates a Car object
+    """Creates a Car object.
 
     Parameters
     ----------
     left
-        A tuple of the pins of the left wheel in the form of (enable, pin1, pin2)
+        A tuple of the pins of the left wheel in the form of (enable, pin1,
+    pin2)
     right
-        A tuple of the pins of the right wheel in the form of (enable, pin1, pin2)
+        A tuple of the pins of the right wheel in the form of (enable, pin1,
+    pin2)
     encoder_left
-        A tuple of of the pins of the left encoder in the form of (digital pin, diameter of the wheel, number of holes in the encoder wheel)
+        A tuple of of the pins of the left encoder in the form of (digital pin,
+    diameter of the wheel, number of holes in the encoder wheel)
         Default is set to all -1 (off)
     encoder_left
-        A tuple of of the pins of the right encoder in the form of (digital pin, diameter of the wheel, number of holes in the encoder wheel)
+        A tuple of of the pins of the right encoder in the form of
+    (digital pin, diameter of the wheel, number of holes in the encoder wheel)
         Default is set to all -1 (off)
     diameter
         The distance between the wheels
     """
     def __init__(self, left, right,
-                 encoder_left = (-1, -1, -1), encoder_right = (-1, -1, -1),
-                 diameter = 0):
+                 encoder_left=(-1, -1, -1), encoder_right=(-1, -1, -1),
+                 diameter=0):
         # Setting up the Left Wheel
         self.left_motor = Wheel(left[0], left[1], left[2])
 
@@ -34,20 +39,22 @@ class Car():
 
         # Setting up Left Encoder
         if encoder_left[2] != -1:
-            self.encoder_left = Encoder(encoder_left[0], encoder_left[1], encoder_left[2])
+            self.encoder_left = Encoder(encoder_left[0], encoder_left[1],
+                                        encoder_left[2])
         else:
             self.encoder_left = -1
 
         # Setting up Right Encoder
         if encoder_right[2] != -1:
-            self.encoder_right = Encoder(encoder_right[0], encoder_right[1], encoder_right[2])
+            self.encoder_right = Encoder(encoder_right[0], encoder_right[1],
+                                         encoder_right[2])
         else:
             self.encoder_right = -1
 
         # Setting up diameter
         self.diameter = diameter
 
-    def setup(self, pwm = False, freq = 1000):
+    def setup(self, pwm=False, freq=1000):
         """
         Sets up the GPIO modes of the pins
 
@@ -74,7 +81,8 @@ class Car():
         """
         Resets the counters of both encoders
         """
-        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
+        assert self.encoder_right != -1 or self.encoder_left != -1,\
+            "Encoders aren't Installed properly"
         self.encoder_right.reset()
         self.encoder_left.reset()
 
@@ -88,7 +96,8 @@ class Car():
         Distance traveled by the left and right wheels
         (left, right)
         """
-        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
+        assert self.encoder_right != -1 or self.encoder_left != -1,\
+            "Encoders aren't Installed properly"
         right = self.encoder_right.get_distance()
         left = self.encoder_left.get_distance()
 
@@ -104,7 +113,8 @@ class Car():
         Counter measured by the left and right encoder
         (left, right)
         """
-        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
+        assert self.encoder_right != -1 or self.encoder_left != -1,\
+            "Encoders aren't Installed properly"
         right = self.encoder_right.get_counter()
         left = self.encoder_left.get_counter()
 
@@ -114,22 +124,24 @@ class Car():
         """
         Update both encoders
         """
-        assert self.encoder_right != -1 or self.encoder_left != -1, "Encoders aren't Installed properly"
-        right = self.encoder_right.update()
-        left = self.encoder_left.update()
+        assert self.encoder_right != -1 or self.encoder_left != -1,\
+            "Encoders aren't Installed properly"
+        self.encoder_right.update()
+        self.encoder_left.update()
 
     def angle_to_distance(self, angle, mode):
         """
-        Returns the distance the wheel need to travel for the car to turn at an angle angle
-        using the turning mode mode
+        Returns the distance the wheel need to travel for the car to turn at an
+        angle angle using the turning mode mode.
 
         Parameters
         ----------
         angle
-            The angle to turn the car at in radians
+            The angle to turn the car at in radians.
         mode
             The turning mode of the car
-            Read documentation of turn_right or turn_left method for more information about the modes
+            Read documentation of turn_right or turn_left method for more
+        information about the modes.
 
         Returns
         -------
@@ -163,7 +175,8 @@ class Car():
 
     def set_speed(self, speed, side):
         """
-        Set the speed of a specific wheel according to side. The wheel will go the other way when it is a negative value
+        Set the speed of a specific wheel according to side. The wheel will go
+        the other way when it is a negative value
 
         Parameters
         ----------
@@ -186,21 +199,23 @@ class Car():
 
         wheel.set_speed(speed)
 
-    def forward(self, speed = 100, distance = 0):
+    def forward(self, speed=100, distance=0):
         """
-        Moves the car forwards according to speed
-        If distance is specified, the car will move forward for that amount of distance
-        The distance traveled is measured in the unit of wheel diameter given to the encoder
-        Both Encoders must be installed for distance travel to work
+        Moves the car forwards according to speed.
+
+        If distance is specified, the car will move forward for that amount of
+        distance The distance traveled is measured in the unit of wheel
+        diameter given to the encoder. Both Encoders must be installed for
+        distance travel to work.
 
         Prameters
         ---------
         speed
-            The speed to move forward in, default is 100
-            Raises a ValueError if speed is greater than 100 or less than 0
+            The speed to move forward in, default is 100.
+            Raises a ValueError if speed is greater than 100 or less than 0.
         distance
-            The distance the car should travel
-            Raises a ValueError if distance is negative
+            The distance the car should travel.
+            Raises a ValueError if distance is negative.
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
@@ -213,7 +228,8 @@ class Car():
             self.reset_encoders()
             distance_traveled = self.get_distance()
             speedL, speedR = (speed, speed)
-            while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+            while distance_traveled[0] <= distance or\
+                    distance_traveled[1] <= distance:
                 self.update_encoders()
                 distance_traveled = self.get_distance()
                 self.move_car(speedL, speedR)
@@ -228,21 +244,22 @@ class Car():
                     speedL = speed
                     speedR = speed
 
-    def backward(self, speed = 100, distance = 0):
-        """
-        Moves the car backwards according to speed
-        If distance is specified, the car will move backward for that amount of distance
-        The distance traveled is measured in the unit of wheel diameter given to the encoder
-        Both Encoders must be installed for distance travel to work
+    def backward(self, speed=100, distance=0):
+        """Moves the car backwards according to speed.
+
+        If distance is specified, the car will move backward for that amount of
+        distance. The distance traveled is measured in the unit of wheel
+        diameter given to the encoder. Both Encoders must be installed for
+        distance travel to work.
 
         Prameters
         ---------
         speed
-            The speed to move backwards in, default is 100
-            Raises a ValueError if speed is greater than 100 or less than 0
+            The speed to move backwards in, default is 100.
+            Raises a ValueError if speed is greater than 100 or less than 0.
         distance
-            The distance the car should travel
-            Raises a ValueError if distance is negative
+            The distance the car should travel.
+            Raises a ValueError if distance is negative.
         """
         if speed < 0:
             raise ValueError("Invalid Speed")
@@ -255,7 +272,8 @@ class Car():
             self.reset_encoders()
             distance_traveled = self.get_distance()
             speedL, speedR = (-speed, -speed)
-            while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+            while distance_traveled[0] <= distance or\
+                    distance_traveled[1] <= distance:
                 self.update_encoders()
                 distance_traveled = self.get_distance()
                 self.move_car(speedL, speedR)
@@ -270,9 +288,9 @@ class Car():
                     speedL = -speed
                     speedR = -speed
 
-    def turn_left(self, speed = 100, mode = 0, angle = 0):
-        """
-        Turns the car left according to speed
+    def turn_left(self, speed=100, mode=0, angle=0):
+        """Turns the car left according to speed.
+
         If angle is specified, the car will turn at that angle in radians
         The diameter of the car must be specified for the turning angle to work
 
@@ -283,8 +301,10 @@ class Car():
             Raises a ValueError if speed is greater than 100 or less than 0
         mode
             Decides how the car will turn
-            if mode is 0, one wheel will move forward and the other will move backwards (turn in the same spot)
-            if mode is 1, one wheel will move forward and the other will stop (turn while still moving forward)
+            if mode is 0, one wheel will move forward and the other will move
+        backwards (turn in the same spot)
+            if mode is 1, one wheel will move forward and the other will stop
+        (turn while still moving forward)
         angle
             The angle to turn the car
             Raises a ValueError if speed is less than 0
@@ -313,7 +333,8 @@ class Car():
                 distance_traveled = self.get_distance()
                 speedL, speedR = (-speed, speed)
                 # Looping until completed
-                while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+                while distance_traveled[0] <= distance or\
+                        distance_traveled[1] <= distance:
                     # Update Condition
                     self.update_encoders()
                     distance_traveled = self.get_distance()
@@ -344,9 +365,9 @@ class Car():
             else:
                 raise ValueError("Invalid Mode")
 
-    def turn_right(self, speed = 100, mode = 0, angle = 0):
-        """
-        Turns the car right according to speed
+    def turn_right(self, speed=100, mode=0, angle=0):
+        """Turns the car right according to speed.
+
         If angle is specified, the car will turn at that angle in radians
         The diameter of the car must be specified for the turning angle to work
 
@@ -357,8 +378,10 @@ class Car():
             Raises a ValueError if speed is greater than 100 or less than 0
         mode
             Decides how the car will turn
-            if mode is 0, one wheel will move forward and the other will move backwards (turn in the same spot)
-            if mode is 1, one wheel will move forward and the other will stop (turn while still moving forward)
+            if mode is 0, one wheel will move forward and the other will move
+        backwards (turn in the same spot)
+            if mode is 1, one wheel will move forward and the other will stop
+        (turn while still moving forward)
         angle
             The angle to turn the car
             Raises a ValueError if speed is less than 0
@@ -387,7 +410,8 @@ class Car():
                 distance_traveled = self.get_distance()
                 speedL, speedR = (speed, -speed)
                 # Looping until completed
-                while distance_traveled[0] <= distance or distance_traveled[1] <= distance:
+                while distance_traveled[0] <= distance or\
+                        distance_traveled[1] <= distance:
                     # Update Condition
                     self.update_encoders()
                     distance_traveled = self.get_distance()
@@ -424,6 +448,7 @@ class Car():
         """
         self.move_car(0, 0)
 
+
 class Encoder:
     """
     Creates an Encoder object
@@ -454,7 +479,7 @@ class Encoder:
         """
         Executed when the encoder changes state
         """
-        self.count+=1
+        self.count += 1
 
     def reset(self):
         """
@@ -463,8 +488,8 @@ class Encoder:
         self.count = 0
 
     def count_to_distance(self, cCounter):
-        """
-        Converts the amount of changes of encoder states into distance according to the unit of the diameter given
+        """Converts the amount of changes of encoder states into distance
+        according to the unit of the diameter given.
 
         Parameters
         ----------
@@ -480,8 +505,8 @@ class Encoder:
         return ratio * cCounter
 
     def distance_to_count(self, distance):
-        """
-        Converts distance according to the unit of the diameter given into the amount of changes of encoder states
+        """Converts distance according to the unit of the diameter given into
+        the amount of changes of encoder states.
 
         Parameters
         ----------
@@ -493,7 +518,7 @@ class Encoder:
         int
             The amount of state changes calculated
         """
-        ratio = nHoles / (2*pi*self.diameter)
+        ratio = self.nHoles / (2*pi*self.diameter)
         return ratio * distance
 
     def update(self):
@@ -521,28 +546,28 @@ class Encoder:
         return self.count
 
     def get_distance(self):
-        """
-        Get the distance traveled as recorded by the encoder
+        """Get the distance traveled as recorded by the encoder.
 
         Returns
         -------
         int
-            The distance traveled as recorded by the encoder in the unit of the diameter given
+            The distance traveled as recorded by the encoder in the unit of the
+        diameter given.
         """
         return self.count_to_distance(self.count)
 
+
 class Wheel:
-    """
-    Creates a wheel object
+    """Creates a wheel object.
 
     Parameters
     ----------
     enable
-        Enable pin of the wheel
+        Enable pin of the wheel.
     pin1
-        One of GPIO pin number
+        One of GPIO pin number.
     pin2
-        One of GPIO pin number
+        One of GPIO pin number.
     """
     def __init__(self, enable, pin1, pin2):
         self.enable = enable
@@ -551,14 +576,13 @@ class Wheel:
         self.pwm = -1
 
     def set_speed(self, speed):
-        """
-        Set the speed of the wheel
+        """Set the speed of the wheel.
 
         Parameters
         ----------
         speed
-            The speed to set the wheel into
-            Raises a ValueError if speed is greater than 100 or less than -100
+            The speed to set the wheel into.
+            Raises a ValueError if speed is greater than 100 or less than -100.
         """
         absSpeed = abs(speed)
 
@@ -591,9 +615,9 @@ class Wheel:
             GPIO.output(pin1, False)
             GPIO.output(pin2, True)
 
-    def setup_pwm(self, freq = 1000):
-        """
-        Setting up the pwm object of the wheel if changing the speed of the wheels is needed with frequency freq (default 1000Hz)
+    def setup_pwm(self, freq=1000):
+        """Setting up the pwm object of the wheel if changing the speed of the
+        wheels is needed with frequency freq (default 1000Hz).
 
         Parameters
         ----------
@@ -602,16 +626,15 @@ class Wheel:
         """
         self.pwm = GPIO.PWM(self.enable, freq)
 
-    def setup(self, pwm = False, freq = 1000):
-        """
-        Sets up the GPIO modes of the pins
+    def setup(self, pwm=False, freq=1000):
+        """Sets up the GPIO modes of the pins.
 
         Parameters
         ----------
         pwm
-            Decides if pwm is needed or not, by default False
+            Decides if pwm is needed or not, by default False.
         freq
-            Setting what frequency of the pwm signal, default is 1000 Hz
+            Setting what frequency of the pwm signal, default is 1000 Hz.
         """
         GPIO.setup(self.enable, GPIO.OUT)
         GPIO.setup(self.pin1, GPIO.OUT)
@@ -620,9 +643,9 @@ class Wheel:
         if pwm:
             self.setup_pwm(freq)
 
+
 class PID:
-    """
-    Creates a PID object
+    """Creates a PID object.
 
     Parameters
     ----------
@@ -642,7 +665,7 @@ class PID:
         self.K_D = K_D
         self.error = 0
         self.P = 0
-        self.I = 0
+        self.i_val = 0
         self.D = 0
         self.prev_error = 0
 
@@ -661,7 +684,7 @@ class PID:
         """
         self.error = self.baseline - value
         self.P = self.error
-        self.I += self.error
+        self.i_val += self.error
         self.D = self.error - self.prev_error
         self.prev_error = self.error
 
@@ -674,8 +697,9 @@ class PID:
         int
             The PID value
         """
-        PID = self.K_P*self.P + self.K_I*self.I + self.K_D*self.D
+        PID = self.K_P * self.P + self.K_I * self.i_val + self.K_D * self.D
         return PID
+
 
 class Colour:
     """
@@ -688,7 +712,7 @@ class Colour:
     config
         The config where the threshold HSV values is stored
     """
-    def __init__(self, colour, config = "config.json"):
+    def __init__(self, colour, config="config.json"):
         with open(config, "r") as f:
             c = json.load(f)
 
@@ -696,8 +720,12 @@ class Colour:
             self.colour = colour
             c = c[colour]["color"]
 
-            self.H_l, self.S_l, self.V_l = c["low"]["H"], c["low"]["S"], c["low"]["V"]
-            self.H_h, self.S_h, self.V_h = c["high"]["H"], c["high"]["S"], c["high"]["V"]
+            self.H_l = c["low"]["H"]
+            self.S_l = c["low"]["S"]
+            self.V_l = c["low"]["V"]
+            self.H_h = c["high"]["H"]
+            self.S_h = c["high"]["S"]
+            self.V_h = c["high"]["V"]
 
             self.__color_low = (self.H_l, self.S_l, self.V_l)
             self.__color_high = (self.H_h, self.S_h, self.V_h)
@@ -728,8 +756,11 @@ class Colour:
         -------
         None
         """
-        self.image = cv2.inRange(input_image, self.__color_low, self.__color_high)
-        self.contours, self.hierarchy = cv2.findContours(self.image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        self.image = cv2.inRange(input_image, self.__color_low,
+                                 self.__color_high)
+        self.contours, self.hierarchy = cv2.findContours(
+            self.image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
 
     def get_contours(self):
         """
